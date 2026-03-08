@@ -1,4 +1,5 @@
 import type { Location, WeatherData, MonthlyTemperature } from "./types.js";
+import { LocationCache, defaultLocationCache } from "./location-cache.js";
 
 /**
  * Monthly irradiance data from weather source.
@@ -28,6 +29,12 @@ export interface FetchWeatherOptions {
   readonly timeoutMs?: number;
   /** Custom fetch function for testing/mocking. */
   readonly fetchFn?: typeof fetch;
+  /** Enable location data caching (default false for backward compat). */
+  readonly cache?: boolean;
+  /** Custom cache instance (uses shared default if not provided). */
+  readonly cacheInstance?: LocationCache;
+  /** Force a fresh fetch, bypassing the cache (default false). */
+  readonly bypassCache?: boolean;
 }
 
 interface OpenMeteoDaily {
@@ -52,6 +59,10 @@ interface OpenMeteoResponse {
  *
  * Returns monthly averages computed from historical climate normals (1991-2020).
  *
+ * When `options.cache` is true, results are stored in an LRU cache keyed by
+ * rounded coordinates (~1.1 km grid). Subsequent calls for the same or nearby
+ * locations return the cached result without hitting the API.
+ *
  * @param location - Geographic location (latitude, longitude)
  * @param options - Optional fetch configuration
  * @returns Weather data with monthly temperatures and irradiance
@@ -62,9 +73,14 @@ interface OpenMeteoResponse {
  * 
  * import { fetchWeatherData } from "solar-calc";
  *
+ * // Without caching (default)
  * const weather = await fetchWeatherData({ latitude: 40.71, longitude: -74.01 });
- * console.log(weather.monthlyTemperatures); // 12 months of avg high/low
- * console.log(weather.monthlyIrradiance);   // 12 months of GHI/DNI/DHI
+ *
+ * // With caching enabled
+ * const cached = await fetchWeatherData(
+ *   { latitude: 40.71, longitude: -74.01 },
+ *   { cache: true }
+ * );
  * 
  */
 export async function fetchWeatherData(
@@ -76,6 +92,18 @@ export async function fetchWeatherData(
   }
   if (location.longitude < -180 || location.longitude > 180) {
     throw new RangeError("Longitude must be between -180 and 180 degrees");
+  }
+
+  const useCache = options?.cache === true;
+  const cache = options?.cacheInstance ?? defaultLocationCache;
+  const bypassCache = options?.bypassCache === true;
+
+  // Check cache first
+  if (useCache && !bypassCache) {
+    const cached = cache.get(location);
+    if (cached) {
+      return cached;
+    }
   }
 
   const fetchFn = options?.fetchFn ?? fetch;
@@ -103,7 +131,14 @@ export async function fetchWeatherData(
   }
 
   const data = (await response.json()) as OpenMeteoResponse;
-  return parseOpenMeteoResponse(data, location);
+  const result = parseOpenMeteoResponse(data, location);
+
+  // Store in cache
+  if (useCache) {
+    cache.set(location, result);
+  }
+
+  return result;
 }
 
 /**

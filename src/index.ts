@@ -38,6 +38,12 @@ import type {
   FetchWeatherOptions,
 } from "./weather.js";
 
+import type {
+  CacheEntry,
+  LocationCacheOptions,
+  CacheStats,
+} from "./location-cache.js";
+
 export {
   Location,
   PanelConfig,
@@ -67,6 +73,9 @@ export {
   MonthlyIrradiance,
   WeatherDataWithIrradiance,
   FetchWeatherOptions,
+  CacheEntry,
+  LocationCacheOptions,
+  CacheStats,
 };
 
 export {
@@ -95,3 +104,9 @@ export {
 export {
   fetchWeatherData,
 } from "./weather.js";
+
+export {
+  LocationCache,
+  locationCacheKey,
+  defaultLocationCache,
+} from "./location-cache.js";
