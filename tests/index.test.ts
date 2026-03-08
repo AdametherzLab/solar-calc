@@ -5,6 +5,7 @@ import {
   calculateAnnualYield,
   calculateStringSizing,
   calculatePayback,
+  fetchWeatherData,
   type Location,
   type PanelConfig,
   type DeratingFactors,
@@ -14,6 +15,8 @@ import {
   type AnnualYield,
   type StringSizingResult,
   type PaybackResult,
+  type WeatherDataWithIrradiance,
+  type FetchWeatherOptions,
 } from "../src/index";
 
 describe("solar-calc", () => {
@@ -166,5 +169,9 @@ describe("solar-calc", () => {
     expect(payback.simple).toBeGreaterThan(0);
     expect(payback.discounted).toBeGreaterThanOrEqual(payback.simple);
     expect(payback.breakEvenYear).toBeGreaterThan(0);
+  });
+
+  it("exports fetchWeatherData and weather types", () => {
+    expect(typeof fetchWeatherData).toBe("function");
   });
 });

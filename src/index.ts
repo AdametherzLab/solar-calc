@@ -32,6 +32,12 @@ import type {
   EconomicsResult,
 } from "./economics.js";
 
+import type {
+  MonthlyIrradiance,
+  WeatherDataWithIrradiance,
+  FetchWeatherOptions,
+} from "./weather.js";
+
 export {
   Location,
   PanelConfig,
@@ -58,6 +64,9 @@ export {
   PaybackResult,
   NetMeteringResult,
   EconomicsResult,
+  MonthlyIrradiance,
+  WeatherDataWithIrradiance,
+  FetchWeatherOptions,
 };
 
 export {
@@ -82,3 +91,7 @@ export {
   calculateNetMeteringSavings,
   analyzeEconomics,
 } from "./economics.js";
+
+export {
+  fetchWeatherData,
+} from "./weather.js";
