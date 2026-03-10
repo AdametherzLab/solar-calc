@@ -110,3 +110,7 @@ export {
   locationCacheKey,
   defaultLocationCache,
 } from "./location-cache.js";
+
+export {
+  createLocationPicker,
+} from "./map.js";

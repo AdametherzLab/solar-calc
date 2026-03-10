@@ -6,6 +6,7 @@ import {
   calculateStringSizing,
   calculatePayback,
   fetchWeatherData,
+  createLocationPicker,
   type Location,
   type PanelConfig,
   type DeratingFactors,
@@ -173,5 +174,9 @@ describe("solar-calc", () => {
 
   it("exports fetchWeatherData and weather types", () => {
     expect(typeof fetchWeatherData).toBe("function");
+  });
+
+  it("exports createLocationPicker", () => {
+    expect(typeof createLocationPicker).toBe("function");
   });
 });
