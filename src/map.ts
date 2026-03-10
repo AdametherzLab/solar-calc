@@ -64,7 +64,12 @@ export interface LocationPickerOptions {
 export function createLocationPicker(options: LocationPickerOptions) {
   const { mapContainerId, initialLatitude = 0, initialLongitude = 0, initialZoom = 2, onLocationSelect, initialLocation } = options;
 
-  const map = L.map(mapContainerId).setView([initialLatitude, initialLongitude], initialZoom);
+  const mapContainer = document.getElementById(mapContainerId);
+  if (!mapContainer) {
+    throw new Error(`Map container with ID '${mapContainerId}' not found`);
+  }
+
+  const map = L.map(mapContainer).setView([initialLatitude, initialLongitude], initialZoom);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -93,8 +98,10 @@ export function createLocationPicker(options: LocationPickerOptions) {
 
   // Add geocoder control for searching locations
   // @ts-ignore - Leaflet Control Geocoder might not have perfect TS definitions
-  L.Control.geocoder({
-    defaultMarkGeocode: false
+  const geocoder = L.Control.geocoder({
+    defaultMarkGeocode: false,
+    placeholder: 'Search location...',
+    errorMessage: 'Location not found.'
   })
     .on('geocode:result', (e: any) => {
       const latlng = e.geocode.center;
@@ -104,5 +111,11 @@ export function createLocationPicker(options: LocationPickerOptions) {
     })
     .addTo(map);
 
-  return { map, setMarker };
+  const destroy = () => {
+    map.remove();
+    geocoder.remove();
+    if (marker) map.removeLayer(marker);
+  };
+
+  return { map, setMarker, destroy };
 }

@@ -9,11 +9,12 @@ const mockMap = {
   on: () => {}, 
   removeLayer: () => {}, 
   addLayer: () => {}, 
-  getZoom: () => 10 
+  getZoom: () => 10,
+  remove: () => {}
 };
 const mockMarker = { addTo: () => mockMap };
 const mockTileLayer = { addTo: () => mockMap };
-const mockGeocoder = { on: () => mockMap, addTo: () => mockMap };
+const mockGeocoder = { on: () => mockMap, addTo: () => mockMap, remove: () => {} };
 
 describe("createLocationPicker", () => {
   let mapContainer: HTMLDivElement;
@@ -40,6 +41,15 @@ describe("createLocationPicker", () => {
     document.body.removeChild(mapContainer);
   });
 
+  it("should throw error when container element doesn't exist", () => {
+    expect(() => {
+      createLocationPicker({
+        mapContainerId: "nonexistent-container",
+        onLocationSelect: () => {}
+      });
+    }).toThrow("Map container with ID 'nonexistent-container' not found");
+  });
+
   it("should initialize a Leaflet map in the specified container", () => {
     const onLocationSelect = (loc: Location) => {};
     const { map } = createLocationPicker({
@@ -48,8 +58,6 @@ describe("createLocationPicker", () => {
     });
 
     expect(map).toBeDefined();
-    // In a real browser environment, you'd check if the map element is rendered
-    // For this mock, we just check if the map object is returned.
   });
 
   it("should call onLocationSelect when a location is clicked", () => {
@@ -66,7 +74,7 @@ describe("createLocationPicker", () => {
     // Simulate a map click event
     const clickEvent = { latlng: { lat: 34.05, lng: -118.25 } } as L.LeafletMouseEvent;
     // @ts-ignore - Directly call the mocked 'on' handler
-    map.on.mock.calls[0][1](clickEvent); // Assuming 'click' is the first event registered
+    map.on.mock.calls[0][1](clickEvent);
 
     expect(selectedLocation).toBeDefined();
     expect(selectedLocation?.latitude).toBe(34.05);
@@ -75,22 +83,17 @@ describe("createLocationPicker", () => {
 
   it("should set an initial marker if initialLocation is provided", () => {
     const initialLocation: Location = { latitude: 40.71, longitude: -74.01 };
-    const onLocationSelect = (loc: Location) => {};
-
+    
     // @ts-ignore
     const markerSpy = jest.spyOn(L, 'marker');
 
     createLocationPicker({
       mapContainerId: "map-test-container",
-      onLocationSelect,
+      onLocationSelect: () => {},
       initialLocation,
     });
 
-    // In a real test, you'd check if a marker was actually added to the map.
-    // With mocks, we can check if L.marker was called with the correct coordinates.
-    // expect(markerSpy).toHaveBeenCalledWith([initialLocation.latitude, initialLocation.longitude]);
-    // Since we're using bun:test, we can't use jest.spyOn directly. We'll rely on the mock setup.
-    // The mock `L.marker` is called, and its `addTo` method is called.
+    expect(markerSpy).toHaveBeenCalledWith([initialLocation.latitude, initialLocation.longitude]);
   });
 
   it("should update the marker when setMarker is called", () => {
@@ -101,15 +104,13 @@ describe("createLocationPicker", () => {
 
     const { setMarker } = createLocationPicker({
       mapContainerId: "map-test-container",
-      initialLatitude: 0,
-      initialLongitude: 0,
       onLocationSelect,
     });
 
     const newLocation: Location = { latitude: 51.5, longitude: -0.1 };
     setMarker(newLocation);
 
-    // Simulate a map click event to trigger onLocationSelect
+    // @ts-ignore
     const clickEvent = { latlng: { lat: newLocation.latitude, lng: newLocation.longitude } } as L.LeafletMouseEvent;
     // @ts-ignore
     mockMap.on.mock.calls[0][1](clickEvent);
@@ -133,12 +134,23 @@ describe("createLocationPicker", () => {
       geocode: { center: { lat: 48.85, lng: 2.35 } }, // Paris
     };
 
-    // Simulate a geocoder result event
     // @ts-ignore
     mockGeocoder.on.mock.calls[0][1](geocoderResult);
 
     expect(selectedLocation).toBeDefined();
     expect(selectedLocation?.latitude).toBe(48.85);
     expect(selectedLocation?.longitude).toBe(2.35);
+  });
+
+  it("should clean up resources when destroy is called", () => {
+    const { destroy } = createLocationPicker({
+      mapContainerId: "map-test-container",
+      onLocationSelect: () => {},
+    });
+
+    // @ts-ignore
+    const removeSpy = jest.spyOn(mockMap, 'remove');
+    destroy();
+    expect(removeSpy).toHaveBeenCalled();
   });
 });

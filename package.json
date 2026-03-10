@@ -1,6 +1,6 @@
 {
   "name": "@adametherzlab/solar-calc",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Solar panel output calculator with location-based yield and payback analysis",
   "type": "module",
   "main": "./dist/index.js",
